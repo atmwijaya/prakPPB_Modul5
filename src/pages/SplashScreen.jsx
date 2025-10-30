@@ -1,4 +1,3 @@
-// src/pages/SplashScreen.jsx
 import React, { useState, useEffect } from 'react';
 import BackgroundPattern from '../components/splash/BackgroundPattern';
 import FloatingElements from '../components/splash/FloatingElements';
