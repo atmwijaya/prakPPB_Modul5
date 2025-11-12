@@ -1,17 +1,29 @@
-import { StrictMode, useState } from 'react'
+import { StrictMode, useState, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import SplashScreen from './pages/SplashScreen';
-import HomePage from './pages/HomePage';
-import MakananPage from './pages/MakananPage';
-import MinumanPage from './pages/MinumanPage';
-import ProfilePage from './pages/ProfilePage';
-import CreateRecipePage from './pages/CreateRecipePage';
-import EditRecipePage from './pages/EditRecipePage';
-import RecipeDetail from './components/recipe/RecipeDetail';
-import DesktopNavbar from './components/navbar/DesktopNavbar';
-import MobileNavbar from './components/navbar/MobileNavbar';
 import './index.css'
 import PWABadge from './PWABadge';
+
+// Lazy load components
+const HomePage = lazy(() => import('./pages/HomePage'));
+const MakananPage = lazy(() => import('./pages/MakananPage'));
+const MinumanPage = lazy(() => import('./pages/MinumanPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const CreateRecipePage = lazy(() => import('./pages/CreateRecipePage'));
+const EditRecipePage = lazy(() => import('./pages/EditRecipePage'));
+const RecipeDetail = lazy(() => import('./components/recipe/RecipeDetail'));
+const DesktopNavbar = lazy(() => import('./components/navbar/DesktopNavbar'));
+const MobileNavbar = lazy(() => import('./components/navbar/MobileNavbar'));
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <p className="mt-4 text-slate-600">Memuat...</p>
+    </div>
+  </div>
+);
 
 function AppRoot() {
   const [showSplash, setShowSplash] = useState(true);
@@ -73,48 +85,74 @@ function AppRoot() {
     // Show Create Recipe Page
     if (mode === 'create') {
       return (
-        <CreateRecipePage
-          onBack={handleBack}
-          onSuccess={handleCreateSuccess}
-        />
+        <Suspense fallback={<LoadingSpinner />}>
+          <CreateRecipePage
+            onBack={handleBack}
+            onSuccess={handleCreateSuccess}
+          />
+        </Suspense>
       );
     }
 
     // Show Edit Recipe Page
     if (mode === 'edit') {
       return (
-        <EditRecipePage
-          recipeId={editingRecipeId}
-          onBack={handleBack}
-          onSuccess={handleEditSuccess}
-        />
+        <Suspense fallback={<LoadingSpinner />}>
+          <EditRecipePage
+            recipeId={editingRecipeId}
+            onBack={handleBack}
+            onSuccess={handleEditSuccess}
+          />
+        </Suspense>
       );
     }
 
     // Show Recipe Detail
     if (mode === 'detail') {
       return (
-        <RecipeDetail
-          recipeId={selectedRecipeId}
-          category={selectedCategory}
-          onBack={handleBack}
-          onEdit={handleEditRecipe}
-        />
+        <Suspense fallback={<LoadingSpinner />}>
+          <RecipeDetail
+            recipeId={selectedRecipeId}
+            category={selectedCategory}
+            onBack={handleBack}
+            onEdit={handleEditRecipe}
+          />
+        </Suspense>
       );
     }
 
     // Show List Pages
     switch (currentPage) {
       case 'home':
-        return <HomePage onRecipeClick={handleRecipeClick} onNavigate={handleNavigation} />;
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <HomePage onRecipeClick={handleRecipeClick} onNavigate={handleNavigation} />
+          </Suspense>
+        );
       case 'makanan':
-        return <MakananPage onRecipeClick={handleRecipeClick} />;
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <MakananPage onRecipeClick={handleRecipeClick} />
+          </Suspense>
+        );
       case 'minuman':
-        return <MinumanPage onRecipeClick={handleRecipeClick} />;
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <MinumanPage onRecipeClick={handleRecipeClick} />
+          </Suspense>
+        );
       case 'profile':
-        return <ProfilePage onRecipeClick={handleRecipeClick} />;
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <ProfilePage onRecipeClick={handleRecipeClick} />
+          </Suspense>
+        );
       default:
-        return <HomePage onRecipeClick={handleRecipeClick} onNavigate={handleNavigation} />;
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <HomePage onRecipeClick={handleRecipeClick} onNavigate={handleNavigation} />
+          </Suspense>
+        );
     }
   };
 
@@ -127,16 +165,20 @@ function AppRoot() {
       {/* Only show navbar in list mode */}
       {mode === 'list' && (
         <>
-          <DesktopNavbar 
-            currentPage={currentPage} 
-            onNavigate={handleNavigation}
-            onCreateRecipe={handleCreateRecipe}
-          />
-          <MobileNavbar 
-            currentPage={currentPage} 
-            onNavigate={handleNavigation}
-            onCreateRecipe={handleCreateRecipe}
-          />
+          <Suspense fallback={null}>
+            <DesktopNavbar 
+              currentPage={currentPage} 
+              onNavigate={handleNavigation}
+              onCreateRecipe={handleCreateRecipe}
+            />
+          </Suspense>
+          <Suspense fallback={null}>
+            <MobileNavbar 
+              currentPage={currentPage} 
+              onNavigate={handleNavigation}
+              onCreateRecipe={handleCreateRecipe}
+            />
+          </Suspense>
         </>
       )}
       

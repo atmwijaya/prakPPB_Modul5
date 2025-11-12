@@ -1,23 +1,40 @@
-import { useState } from 'react';
-import { useRecipe } from '../hooks/useRecipes';
-import { useReviews, useCreateReview } from '../hooks/useReviews';
-import { useIsFavorited } from '../hooks/useFavorites';
-import { getUserIdentifier } from '../hooks/useFavorites';
-import { formatDate, getDifficultyColor, getStarRating } from '../utils/helpers';
-import { Heart, Clock, Users, ChefHat } from 'lucide-react';
+import { useState } from "react";
+import { useRecipe } from "../hooks/useRecipes";
+import { useReviews, useCreateReview } from "../hooks/useReviews";
+import { useIsFavorited } from "../hooks/useFavorites";
+import { getUserIdentifier } from "../hooks/useFavorites";
+import {
+  formatDate,
+  getDifficultyColor,
+  getStarRating,
+} from "../utils/helpers";
+import { Heart, Clock, Users, ChefHat } from "lucide-react";
 
 export default function RecipeDetailPage({ recipeId, onBack }) {
-  const { recipe, loading: recipeLoading, error: recipeError } = useRecipe(recipeId);
-  const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews(recipeId);
+  const {
+    recipe,
+    loading: recipeLoading,
+    error: recipeError,
+  } = useRecipe(recipeId);
+  const {
+    reviews,
+    loading: reviewsLoading,
+    refetch: refetchReviews,
+  } = useReviews(recipeId);
   const { createReview, loading: createLoading } = useCreateReview();
-  const { isFavorited, loading: favLoading, toggleFavorite } = useIsFavorited(recipeId);
+  const {
+    isFavorited,
+    loading: favLoading,
+    toggleFavorite,
+  } = useIsFavorited(recipeId);
 
+  const [showShareTooltip, setShowShareTooltip] = useState(false);
   const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    
+
     const reviewData = {
       user_identifier: getUserIdentifier(),
       rating,
@@ -26,7 +43,7 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
 
     const result = await createReview(recipeId, reviewData);
     if (result) {
-      setComment('');
+      setComment("");
       setRating(5);
       refetchReviews();
     }
@@ -86,12 +103,12 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
             onClick={handleToggleFavorite}
             disabled={favLoading}
             className={`p-2 rounded-full transition-colors ${
-              isFavorited 
-                ? 'bg-red-100 text-red-600' 
-                : 'bg-gray-100 text-gray-400'
+              isFavorited
+                ? "bg-red-100 text-red-600"
+                : "bg-gray-100 text-gray-400"
             }`}
           >
-            <Heart className={isFavorited ? 'fill-current' : ''} />
+            <Heart className={isFavorited ? "fill-current" : ""} />
           </button>
         </div>
       </div>
@@ -111,9 +128,13 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             {recipe.name}
           </h1>
-          
+
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(recipe.difficulty)}`}>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(
+                recipe.difficulty
+              )}`}
+            >
               {recipe.difficulty}
             </span>
             <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -155,7 +176,10 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
               <Heart className="w-5 h-5 text-indigo-600" />
               <div>
                 <p className="text-sm text-gray-500">Rating</p>
-                <p className="font-semibold">{recipe.average_rating?.toFixed(1) || 'N/A'} ({recipe.review_count})</p>
+                <p className="font-semibold">
+                  {recipe.average_rating?.toFixed(1) || "N/A"} (
+                  {recipe.review_count})
+                </p>
               </div>
             </div>
           </div>
@@ -178,7 +202,9 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
 
         {/* Steps */}
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Langkah-langkah</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Langkah-langkah
+          </h2>
           <ol className="space-y-4">
             {recipe.steps?.map((step) => (
               <li key={step.id} className="flex gap-4">
@@ -194,11 +220,14 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
         {/* Reviews Section */}
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Ulasan</h2>
-          
+
           {/* Create Review Form */}
-          <form onSubmit={handleSubmitReview} className="mb-8 p-4 bg-gray-50 rounded-xl">
+          <form
+            onSubmit={handleSubmitReview}
+            className="mb-8 p-4 bg-gray-50 rounded-xl"
+          >
             <h3 className="font-semibold text-gray-900 mb-3">Tulis Ulasan</h3>
-            
+
             {/* Rating Input */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -211,7 +240,7 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
                     type="button"
                     onClick={() => setRating(star)}
                     className={`text-2xl ${
-                      star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                      star <= rating ? "text-yellow-400" : "text-gray-300"
                     }`}
                   >
                     ⭐
@@ -243,7 +272,7 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
               disabled={createLoading}
               className="w-full md:w-auto px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {createLoading ? 'Mengirim...' : 'Kirim Ulasan'}
+              {createLoading ? "Mengirim..." : "Kirim Ulasan"}
             </button>
           </form>
 
@@ -255,11 +284,18 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
           ) : (
             <div className="space-y-4">
               {reviews.map((review) => (
-                <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                <div
+                  key={review.id}
+                  className="border-b border-gray-200 pb-4 last:border-b-0"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <p className="font-medium text-gray-900">{review.user_identifier}</p>
-                      <p className="text-sm text-gray-500">{formatDate(review.created_at)}</p>
+                      <p className="font-medium text-gray-900">
+                        {review.user_identifier}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {formatDate(review.created_at)}
+                      </p>
                     </div>
                     <div className="text-yellow-400">
                       {getStarRating(review.rating)}
