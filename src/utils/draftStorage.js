@@ -113,12 +113,9 @@ export const loadUserReviews = (userIdentifier) => {
  */
 export const saveFavorites = (favoritesData) => {
   try {
-    const favorites = {
-      items: favoritesData,
-      updatedAt: new Date().toISOString(),
-    };
-    saveDraft(favorites, FAVORITES_KEY);
-    console.log("Favorites saved:", favorites);
+    // Save directly as array
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoritesData));
+    console.log("Favorites saved:", favoritesData);
     return true;
   } catch (error) {
     console.error("Error saving favorites:", error);
@@ -132,7 +129,11 @@ export const saveFavorites = (favoritesData) => {
  */
 export const loadFavorites = () => {
   try {
-    const favoritesData = loadDraft(FAVORITES_KEY);
+    const favoritesData = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+    // Handle both old format {items: []} and new format []
+    if (Array.isArray(favoritesData)) {
+      return favoritesData;
+    }
     return favoritesData?.items || [];
   } catch (error) {
     console.error("Error loading favorites:", error);
@@ -147,19 +148,21 @@ export const loadFavorites = () => {
 export const addToFavorites = (recipe) => {
   try {
     const favorites = loadFavorites();
+    
+    // Ensure all required fields have values with defaults
     const favoriteRecipe = {
-      id: recipe.id,
-      name: recipe.name,
-      description: recipe.description,
-      image_url: recipe.image_url, // Pastikan ini ada
-      category: recipe.category,
-      prep_time: recipe.prep_time,
-      cook_time: recipe.cook_time,
-      difficulty: recipe.difficulty,
-      average_rating: recipe.average_rating,
-      servings: recipe.servings,
-      ingredients: recipe.ingredients,
-      steps: recipe.steps,
+      id: recipe.id || Date.now(),
+      name: recipe.name || "Unnamed Recipe",
+      description: recipe.description || "",
+      image_url: recipe.image_url || "",
+      category: recipe.category || "makanan",
+      prep_time: recipe.prep_time || recipe.cook_time || "15",
+      cook_time: recipe.cook_time || "15",
+      difficulty: recipe.difficulty || "mudah",
+      average_rating: recipe.average_rating || 0,
+      servings: recipe.servings || 4,
+      ingredients: recipe.ingredients || [],
+      steps: recipe.steps || [],
       added_at: new Date().toISOString()
     };
     
@@ -167,6 +170,7 @@ export const addToFavorites = (recipe) => {
     if (existingIndex === -1) {
       favorites.push(favoriteRecipe);
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+      console.log("Recipe added to favorites:", favoriteRecipe);
       return true;
     }
     return false;
@@ -184,7 +188,8 @@ export const removeFromFavorites = (recipeId) => {
   try {
     const favorites = loadFavorites();
     const updatedFavorites = favorites.filter((fav) => fav.id !== recipeId);
-    saveFavorites(updatedFavorites);
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(updatedFavorites));
+    console.log("Recipe removed from favorites:", recipeId);
     return true;
   } catch (error) {
     console.error("Error removing from favorites:", error);

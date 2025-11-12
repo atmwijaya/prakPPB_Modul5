@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocalStorageValue } from "../hooks/useLocalStorage";
 import {
   saveDraft,
   loadDraft,
@@ -24,15 +25,20 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage({ onRecipeClick }) {
-  const [favorites, setFavorites] = useState([]);
-  const [userReviews, setUserReviews] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState("favorites"); // 'favorites', 'reviews'
   const [userProfile, setUserProfile] = useState({
     username: "Pengguna",
     avatar: "",
     bio: "Pecinta masakan lezat dan minuman segar",
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("favorites"); // 'favorites', 'reviews'
+
+  // Use custom hook to monitor localStorage changes
+  const favoritesFromStorage = useLocalStorageValue("user_favorites", []);
+  const reviewsFromStorage = useLocalStorageValue("recipe_reviews", []);
+
+  const [favorites, setFavorites] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
 
   const anggotaKelompok = [
     {
@@ -61,38 +67,33 @@ export default function ProfilePage({ onRecipeClick }) {
     if (savedProfile) {
       setUserProfile(savedProfile);
     }
-
-    // Load favorites and reviews
-    loadFavoritesData();
-    loadUserReviewsData();
   }, []);
 
-  const loadFavoritesData = () => {
+  // Update favorites whenever storage changes
+  useEffect(() => {
     try {
-      const favoritesData = loadFavorites();
-      setFavorites(favoritesData || []);
+      setFavorites(favoritesFromStorage || []);
     } catch (error) {
-      console.error("Error loading favorites:", error);
-      setFavorites([]);
+      console.error("Error updating favorites:", error);
     }
-  };
+  }, [favoritesFromStorage]);
 
-  const loadUserReviewsData = () => {
+  // Update user reviews whenever storage changes
+  useEffect(() => {
     try {
-      const userIdentifier = userProfile.username;
-      const reviewsData = loadUserReviews(userIdentifier);
-      setUserReviews(reviewsData || []);
+      const filteredReviews = (reviewsFromStorage || []).filter(
+        (review) => review.user_identifier === userProfile.username
+      );
+      setUserReviews(filteredReviews);
     } catch (error) {
-      console.error("Error loading user reviews:", error);
-      setUserReviews([]);
+      console.error("Error updating reviews:", error);
     }
-  };
+  }, [reviewsFromStorage, userProfile.username]);
 
   const handleSaveProfile = () => {
     saveDraft(userProfile, "user_profile");
     setIsEditing(false);
     alert("Profil berhasil disimpan!");
-    loadUserReviewsData();
   };
 
   const handleCancelEdit = () => {
@@ -131,8 +132,7 @@ export default function ProfilePage({ onRecipeClick }) {
     if (window.confirm("Hapus dari favorit?")) {
       const success = removeFromFavorites(recipeId);
       if (success) {
-        // Refresh favorites list
-        loadFavoritesData();
+        // Update local state will be triggered automatically by the useLocalStorageValue hook
         alert("Resep berhasil dihapus dari favorit!");
       }
     }

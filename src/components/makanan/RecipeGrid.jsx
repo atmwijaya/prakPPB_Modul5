@@ -68,7 +68,7 @@ export default function RecipeGrid({ recipes, onRecipeClick }) {
                 
                 {/* Favorite Button */}
                 <div className="absolute top-3 right-3 z-10">
-                  <FavoriteButton recipeId={recipe.id} size="sm" />
+                  <FavoriteButton recipe={{ ...recipe, category: 'makanan' }} size="sm" />
                 </div>
               </div>
               <div className="relative z-10 p-4 md:p-8">

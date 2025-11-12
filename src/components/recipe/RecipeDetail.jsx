@@ -87,6 +87,8 @@ export default function RecipeDetail({
       user_identifier: userProfile.username || getUserIdentifier(),
       rating,
       comment: comment.trim(),
+      recipe_name: recipe.name,
+      category: category,
     };
 
     const success = await createReview(recipeId, reviewData);
@@ -283,7 +285,7 @@ export default function RecipeDetail({
 
             {/* Favorite Button - Use component */}
             <div className="absolute top-4 right-4 z-10">
-              <FavoriteButton recipeId={recipeId} size="lg" />
+              <FavoriteButton recipe={recipe && { ...recipe, category }} size="lg" />
             </div>
 
             {/* Category Badge */}

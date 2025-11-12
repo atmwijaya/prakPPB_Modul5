@@ -1,4 +1,7 @@
 import { apiClient } from "../config/api";
+
+const REVIEWS_KEY = "recipe_reviews";
+
 class ReviewService {
   /**
    * Get all reviews for a recipe
@@ -7,14 +10,37 @@ class ReviewService {
    */
   async getReviews(recipeId) {
     try {
-      const response = await apiClient.get(
-        `/api/v1/recipes/${recipeId}/reviews`
-      );
-      return response;
+      // Try to get from API first
+      try {
+        const response = await apiClient.get(
+          `/api/v1/recipes/${recipeId}/reviews`
+        );
+        return response;
+      } catch (apiError) {
+        // Fallback to localStorage
+        const reviews = this.getReviewsFromStorage(recipeId);
+        return { success: true, data: reviews };
+      }
     } catch (error) {
       throw error;
     }
   }
+
+  /**
+   * Get reviews from localStorage
+   * @param {string} recipeId - Recipe ID
+   * @returns {Array} Reviews array
+   */
+  getReviewsFromStorage(recipeId) {
+    try {
+      const allReviews = JSON.parse(localStorage.getItem(REVIEWS_KEY) || "[]");
+      return allReviews.filter((review) => review.recipe_id === recipeId);
+    } catch (error) {
+      console.error("Error getting reviews from storage:", error);
+      return [];
+    }
+  }
+
   /**
 * Create review for a recipe
 * @param {string} recipeId - Recipe ID
@@ -32,9 +58,48 @@ identifier
         `/api/v1/recipes/${recipeId}/reviews`,
         reviewData
       );
+      
+      // Also save to localStorage for persistence
+      if (response.success || response.data) {
+        this.saveReviewToStorage(recipeId, reviewData);
+      }
+      
       return response;
     } catch (error) {
-      throw error;
+      // Fallback: Save to localStorage even if API fails
+      console.warn("API error, saving to localStorage:", error);
+      this.saveReviewToStorage(recipeId, reviewData);
+      return { success: true, data: reviewData, offline: true };
+    }
+  }
+
+  /**
+   * Save review to localStorage
+   * @param {string} recipeId - Recipe ID
+   * @param {Object} reviewData - Review data
+   */
+  saveReviewToStorage(recipeId, reviewData) {
+    try {
+      const allReviews = JSON.parse(localStorage.getItem(REVIEWS_KEY) || "[]");
+      
+      const newReview = {
+        id: Date.now().toString(),
+        recipe_id: recipeId,
+        recipe_name: reviewData.recipe_name,
+        category: reviewData.category,
+        user_identifier: reviewData.user_identifier,
+        rating: reviewData.rating,
+        comment: reviewData.comment || "",
+        created_at: new Date().toISOString(),
+      };
+
+      allReviews.push(newReview);
+      localStorage.setItem(REVIEWS_KEY, JSON.stringify(allReviews));
+      console.log("Review saved to localStorage:", newReview);
+      return newReview;
+    } catch (error) {
+      console.error("Error saving review to storage:", error);
+      return null;
     }
   }
   /**
