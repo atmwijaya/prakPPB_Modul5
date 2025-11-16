@@ -241,52 +241,69 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!uploadedImageUrl) {
-      setError("Gambar harus diupload terlebih dahulu");
-      return;
-    }
+
+    // Validate form
     if (!validateForm()) {
       return;
     }
+
     try {
       setCreating(true);
-      // Prepare recipe data with uploaded image URL
-      const validIngredients = ingredients.filter(
-        (ing) => ing.name.trim() && ing.quantity.trim()
-      );
-      const validSteps = steps.filter((step) => step.trim());
+
+      // Prepare recipe data
       const recipeData = {
-        name: formData.name.trim(),
-        category: formData.category,
-        description: formData.description.trim(),
-        image_url: uploadedImageUrl, // Use uploaded image URL
-        prep_time: parseInt(formData.prep_time),
-        cook_time: parseInt(formData.cook_time),
-        servings: parseInt(formData.servings),
-        difficulty: formData.difficulty,
-        is_featured: formData.is_featured,
-        ingredients: validIngredients,
-        steps: validSteps,
+        ...formData,
+        image_url: uploadedImageUrl,
+        ingredients,
+        steps,
       };
 
       // Create recipe
-      const result = await recipeService.createRecipe(recipeData);
-      if (result.success) {
+      const response = await recipeService.createRecipe(recipeData);
+
+      // Check if response has the recipe data
+      const createdRecipe = response?.data?.data || response?.data;
+      if (createdRecipe?.id) {
+        // Delete draft after successful creation
+        deleteDraft("create");
+
+        // Show success message
         alert("Resep berhasil dibuat!");
-        deleteDraft("create"); // Clear draft after successful creation
+
+        // Call success callback
         if (onSuccess) {
-          onSuccess(result.data);
-        } else if (onBack) {
-          onBack();
+          onSuccess(createdRecipe);
+        } else {
+          // Reset form
+          setFormData({
+            name: "",
+            category: "makanan",
+            description: "",
+            prep_time: "",
+            cook_time: "",
+            servings: "",
+            difficulty: "mudah",
+            is_featured: false,
+          });
+          setImageFile(null);
+          setImagePreview(null);
+          setUploadedImageUrl("");
+          setIngredients([{ name: "", quantity: "" }]);
+          setSteps([""]);
+          setCurrentStep("upload");
         }
       } else {
-        throw new Error(result.message || "Gagal membuat resep");
+        setError("Gagal membuat resep. Coba lagi.");
       }
     } catch (err) {
-      setError(err.message || "Terjadi kesalahan saat membuat resep");
+      console.error("Error creating recipe:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Gagal membuat resep. Coba lagi."
+      );
     } finally {
       setCreating(false);
-      setUploading(false);
     }
   };
   return (

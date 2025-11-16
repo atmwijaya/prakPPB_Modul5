@@ -62,6 +62,7 @@ class RecipeService {
     try {
       // Prepare data for API
       const preparedData = this.prepareRecipeData(recipeData);
+      
       const response = await apiClient.post("/api/v1/recipes", preparedData);
       
       // Normalize response data
@@ -214,11 +215,22 @@ class RecipeService {
     }
 
     // Ensure steps array is properly formatted
+    // Server expects array of strings, not objects
     if (Array.isArray(preparedData.steps)) {
-      preparedData.steps = preparedData.steps.map((step, index) => ({
-        step_number: index + 1,
-        instruction: step.instruction?.trim() || ''
-      })).filter(step => step.instruction);
+      preparedData.steps = preparedData.steps
+        .map((step) => {
+          // If step is a string, return as-is
+          if (typeof step === 'string') {
+            return step.trim();
+          }
+          // If step is an object with instruction property, extract instruction
+          if (step && step.instruction) {
+            return step.instruction.trim();
+          }
+          // Otherwise skip
+          return null;
+        })
+        .filter(step => step && step.length > 0);
     } else {
       preparedData.steps = [];
     }
