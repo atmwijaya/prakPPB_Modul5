@@ -13,8 +13,8 @@ export default function MinumanPage({ onRecipeClick }) {
   });
   const [page, setPage] = useState(1);
 
-  // Fetch recipes from API with all filters
-  const { recipes, loading, error, pagination, refetch } = useRecipes({
+  // Fetch recipes dengan React Query caching
+  const { recipes, loading, error, pagination, isFetching, refetch } = useRecipes({
     category: 'minuman',
     search: searchQuery || undefined,
     difficulty: filters.difficulty || undefined,
@@ -26,17 +26,20 @@ export default function MinumanPage({ onRecipeClick }) {
 
   const handleSearchChange = (query) => {
     setSearchQuery(query);
-    setPage(1); // Reset to first page on search
+    setPage(1);
   };
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    setPage(1); // Reset to first page on filter change
+    setPage(1);
   };
 
-  // Client-side filter for prep time (since API might not support it)
+  // Client-side filter untuk prep time
   const filteredRecipes = filters.prepTimeMax
-    ? recipes.filter(recipe => recipe.prep_time <= parseInt(filters.prepTimeMax))
+    ? recipes.filter(recipe => {
+        const prepTime = parseInt(recipe.prep_time);
+        return !isNaN(prepTime) && prepTime <= parseInt(filters.prepTimeMax);
+      })
     : recipes;
 
   return (
@@ -58,6 +61,13 @@ export default function MinumanPage({ onRecipeClick }) {
           onFilterChange={handleFilterChange}
           initialFilters={{ ...filters, search: searchQuery }}
         />
+
+        {/* Background Fetching Indicator */}
+        {isFetching && !loading && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+            Memperbarui data...
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -86,10 +96,13 @@ export default function MinumanPage({ onRecipeClick }) {
         {/* Recipes Grid */}
         {!loading && !error && (
           <>
-            {recipes.length === 0 ? (
+            {filteredRecipes.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-600 text-lg">
-                  Tidak ada resep ditemukan
+                  {searchQuery || filters.difficulty || filters.prepTimeMax 
+                    ? "Tidak ada resep yang sesuai dengan filter" 
+                    : "Belum ada resep minuman"
+                  }
                 </p>
                 <p className="text-gray-500 mt-2">
                   Coba ubah filter atau kata kunci pencarian
